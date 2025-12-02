@@ -14,11 +14,70 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
-# Inisialisasi aplikasi dengan tema LUX dan supresi error
+# Inisialisasi aplikasi dengan tema LUX, font, dan supresi error
 app = dash.Dash(__name__,
-                external_stylesheets=[dbc.themes.LUX, "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&display=swap"],
+                external_stylesheets=[dbc.themes.LUX, "https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&display=swap", dbc.icons.BOOTSTRAP],
                 suppress_callback_exceptions=True)
 app.title = "Laboratorium Analisis Kuantitatif"
+
+# --- Komponen Modal "Tentang Kami" dengan Foto Lokal ---
+about_us_modal = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Tentang Tim Proyek")),
+    dbc.ModalBody([
+        html.P("Proyek ini dikembangkan oleh tim yang berdedikasi untuk menciptakan alat analisis data yang intuitif dan kuat.", className="text-center mb-4"),
+        dbc.Row([
+            # Anggota Tim 1
+            dbc.Col(md=4, children=[
+                dbc.Card([
+                    dbc.CardBody([
+                        # PERUBAHAN DI SINI: Menggunakan aset lokal
+                        html.Img(src=app.get_asset_url('foto_profil_1.png'), className="rounded-circle img-fluid mb-3 mx-auto d-block", style={'width': '100px', 'height': '100px', 'objectFit': 'cover'}),
+                        html.H5("Farid Ade Novian", className="card-title text-center"),
+                        html.P("Project Lead", className="card-text text-center text-muted"),
+                        html.Div([
+                            html.A(html.I(className="bi bi-github fs-4 me-3"), href="https://github.com/fnovians", target="_blank"),
+                            html.A(html.I(className="bi bi-instagram fs-4"), href="https://www.instagram.com/fnovian_/", target="_blank"),
+                        ], className="text-center")
+                    ])
+                ])
+            ]),
+            # Anggota Tim 2
+            dbc.Col(md=4, children=[
+                dbc.Card([
+                    dbc.CardBody([
+                        # PERUBAHAN DI SINI: Menggunakan aset lokal
+                        html.Img(src=app.get_asset_url('foto_profil_2.png'), className="rounded-circle img-fluid mb-3 mx-auto d-block", style={'width': '100px', 'height': '100px', 'objectFit': 'cover'}),
+                        html.H5("Aurora Ilmannafia", className="card-title text-center"),
+                        html.P("Data Scientist", className="card-text text-center text-muted"),
+                        html.Div([
+                            html.A(html.I(className="bi bi-github fs-4 me-3"), href="https://github.com/auroranafia", target="_blank"),
+                            html.A(html.I(className="bi bi-instagram fs-4"), href="https://www.instagram.com/auroraanafia/", target="_blank"),
+                        ], className="text-center")
+                    ])
+                ])
+            ]),
+            # Anggota Tim 3
+            dbc.Col(md=4, children=[
+                dbc.Card([
+                    dbc.CardBody([
+                        # PERUBAHAN DI SINI: Menggunakan aset lokal
+                        html.Img(src=app.get_asset_url('foto_profil_3.png'), className="rounded-circle img-fluid mb-3 mx-auto d-block", style={'width': '100px', 'height': '100px', 'objectFit': 'cover'}),
+                        html.H5("Tiara Zahrofi Ifadhah", className="card-title text-center"),
+                        html.P("Data Scientist", className="card-text text-center text-muted"),
+                        html.Div([
+                            html.A(html.I(className="bi bi-github fs-4 me-3"), href="https://github.com/tiarazahrofii", target="_blank"),
+                            html.A(html.I(className="bi bi-instagram fs-4"), href="https://www.instagram.com/tiarazahrofi/", target="_blank"),
+                        ], className="text-center")
+                    ])
+                ])
+            ]),
+        ])
+    ]),
+    dbc.ModalFooter(
+        dbc.Button("Tutup", id="close-about-modal", className="ms-auto", n_clicks=0)
+    ),
+], id="about-us-modal", is_open=False, size="lg")
+
 
 # --- Layout Aplikasi Utama ---
 app.layout = html.Div(style={'fontFamily': '"Source Serif Pro", serif'}, children=[
@@ -27,10 +86,14 @@ app.layout = html.Div(style={'fontFamily': '"Source Serif Pro", serif'}, childre
         dcc.Store(id='filtered-data-store'),
         dcc.Store(id='error-store'),
         dcc.Store(id='tgm-calculated-data-store'),
+        about_us_modal,
 
         html.Div([
-            html.H1("Laboratorium Analisis Kuantitatif", className="display-4"),
-            html.P("Sebuah lingkungan interaktif untuk eksplorasi data dan pemodelan matematis.", className="lead text-muted")
+            dbc.Row([
+                dbc.Col(html.H1("Platform Analisis Data Ilmiah: Statistik, Visualisasi, dan Prediksi", className="display-4"), width='auto'),
+                dbc.Col(dbc.Button("Tentang Tim", id="open-about-modal", color="secondary", outline=True), className="d-flex align-items-center justify-content-end")
+            ]),
+            html.P("Integrasi statistik, visualisasi, dan pemodelan prediktif dalam satu platform.", className="lead text-muted")
         ], className="p-5 mb-4 bg-light border rounded-3"),
 
         dbc.Row([
@@ -64,7 +127,19 @@ app.layout = html.Div(style={'fontFamily': '"Source Serif Pro", serif'}, childre
     ])
 ])
 
-# --- Fungsi Parsing ---
+# --- Callback untuk Modal "Tentang Kami" ---
+@app.callback(
+    Output("about-us-modal", "is_open"),
+    [Input("open-about-modal", "n_clicks"), Input("close-about-modal", "n_clicks")],
+    [State("about-us-modal", "is_open")],
+)
+def toggle_about_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+# ... (Sisa dari callbacks tetap sama) ...
+
 def parse_contents(contents, filename, delimiter):
     if contents is None: return None, "Tidak ada file yang diunggah."
     content_type, content_string = contents.split(',')
@@ -75,9 +150,6 @@ def parse_contents(contents, filename, delimiter):
     except Exception as e:
         return None, f"Gagal mem-parsing file. Error: {e}. Coba ganti delimiter."
 
-# --- CALLBACKS ---
-
-# 1. Handle upload
 @app.callback(Output('original-data-store', 'data'), Output('error-store', 'data'), Input('upload-data', 'contents'), State('upload-data', 'filename'), State('csv-delimiter', 'value'))
 def handle_upload(contents, filename, delimiter):
     if contents:
@@ -85,14 +157,12 @@ def handle_upload(contents, filename, delimiter):
         return data, error_message
     return None, None
 
-# 2. Tampilkan error
 @app.callback(Output('upload-error-output', 'children'), Input('error-store', 'data'))
 def display_error(error_message):
     if error_message:
         return dbc.Alert(error_message, color="danger", dismissable=True, className="mb-3")
     return None
 
-# 3. Tampilkan panel filter
 @app.callback(Output('filter-panel', 'style'), Output('year-column-selector', 'options'), Input('original-data-store', 'data'))
 def show_filter_panel(jsonified_data):
     if jsonified_data:
@@ -100,7 +170,6 @@ def show_filter_panel(jsonified_data):
         return {'display': 'block'}, [{'label': col, 'value': col} for col in df.columns]
     return {'display': 'none'}, []
 
-# 4. Isi dropdown filter tahun
 @app.callback(Output('year-filter-dropdown', 'options'), Output('year-filter-dropdown', 'disabled'), Output('year-filter-dropdown', 'value'), Input('year-column-selector', 'value'), State('original-data-store', 'data'))
 def populate_year_filter(selected_year_col, jsonified_data):
     if selected_year_col and jsonified_data:
@@ -110,7 +179,6 @@ def populate_year_filter(selected_year_col, jsonified_data):
         return options, False, 'all'
     return [], True, None
 
-# 5. Lakukan filtering
 @app.callback(Output('filtered-data-store', 'data'), Input('year-filter-dropdown', 'value'), State('year-column-selector', 'value'), State('original-data-store', 'data'))
 def filter_data_by_year(selected_year, year_col, jsonified_data):
     if not jsonified_data: return None
@@ -125,7 +193,6 @@ def filter_data_by_year(selected_year, year_col, jsonified_data):
         return filtered_df.to_json(date_format='iso', orient='split')
     return df.to_json(date_format='iso', orient='split')
 
-# 6. Render Konten Utama (Tabs)
 @app.callback(Output('main-content-area', 'children'), Input('filtered-data-store', 'data'))
 def render_main_content(jsonified_filtered_data):
     if not jsonified_filtered_data:
@@ -141,8 +208,6 @@ def render_main_content(jsonified_filtered_data):
     tab_ml = dbc.Card(dbc.CardBody([dbc.Row([dbc.Col(md=6, children=[html.H5("1. Konfigurasi Model"), dbc.Label("Variabel Target (Y):", className="fw-bold"), dcc.Dropdown(id='ml-target-var', options=numeric_cols, value=numeric_cols[-1] if numeric_cols else None, className="mb-3"), dbc.Label("Variabel Fitur (X):", className="fw-bold"), dcc.Dropdown(id='ml-feature-vars', options=numeric_cols, multi=True, className="mb-3"), dbc.Label("Pilih Model:", className="fw-bold"), dcc.Dropdown(id='ml-model-type', options=['Linear Regression', 'Random Forest'], value='Linear Regression')]), dbc.Col(md=6, className="d-flex flex-column justify-content-center", children=[html.H5("2. Eksekusi"), dbc.Button("Latih & Evaluasi Model", id="ml-train-btn", color="primary", size="lg", className="w-100 mt-4 fw-bold")])]), html.Hr(className="my-4"), html.H5("3. Hasil Evaluasi Model"), dcc.Loading(html.Div(id='ml-results-output'))], className="p-4"))
     tab_tgm = dbc.Card(dbc.CardBody([html.H5("Kalkulator Tingkat Minat Membaca (TGM)"), html.P("Petakan kolom dari dataset Anda ke variabel TGM yang sesuai.", className="text-muted"), html.Hr(), dbc.Row([dbc.Col(md=4, children=[dbc.Label("Frekuensi Membaca (RF):", className="fw-bold"), dcc.Dropdown(id='tgm-rf-col', options=numeric_cols, placeholder="Pilih kolom...")]), dbc.Col(md=4, children=[dbc.Label("Durasi Membaca Harian (DRD):", className="fw-bold"), dcc.Dropdown(id='tgm-drd-col', options=numeric_cols, placeholder="Pilih kolom...")]), dbc.Col(md=4, children=[dbc.Label("Jumlah Membaca (NR):", className="fw-bold"), dcc.Dropdown(id='tgm-nr-col', options=numeric_cols, placeholder="Pilih kolom...")])], className="mb-3"), dbc.Row([dbc.Col(md=4, children=[dbc.Label("Frekuensi Akses Internet (IAF):", className="fw-bold"), dcc.Dropdown(id='tgm-iaf-col', options=numeric_cols, placeholder="Pilih kolom...")]), dbc.Col(md=4, children=[dbc.Label("Durasi Internet Harian (DID):", className="fw-bold"), dcc.Dropdown(id='tgm-did-col', options=numeric_cols, placeholder="Pilih kolom...")]), dbc.Col(md=4, className="d-flex align-items-end", children=[dbc.Button("Hitung TGM", id="tgm-calculate-btn", color="success", className="w-100 fw-bold")])]), html.Hr(className="my-4"), dcc.Loading(html.Div(id='tgm-results-output'))], className="p-4"))
     return dbc.Tabs([dbc.Tab(tab_data_view, label="🔢 Dataset"), dbc.Tab(tab_stats, label="Σ Statistik Deskriptif"), dbc.Tab(tab_visuals, label="📊 Visualisasi"), dbc.Tab(tab_ml, label="🧠 Pemodelan f(x)"), dbc.Tab(tab_tgm, label="📚 TGM")])
-
-# --- Callbacks ---
 
 @app.callback(Output('correlation-heatmap-graph', 'figure'), Input('filtered-data-store', 'data'))
 def update_correlation_heatmap(jsonified_data):
@@ -177,44 +242,25 @@ def update_feature_options(target_var, jsonified_data):
 def train_ml_model(n_clicks, target_var, feature_vars, model_type, jsonified_data):
     if n_clicks is None: return dbc.Alert("Konfigurasi model Anda dan klik tombol 'Latih & Evaluasi'.", color="info", className="mt-4")
     if not all([target_var, feature_vars, model_type, jsonified_data]): return dbc.Alert("Pastikan semua parameter (Target, Fitur, Model) sudah dipilih.", color="warning", className="mt-4")
-    
     df = pd.read_json(io.StringIO(jsonified_data), orient='split')
-    
-    # --- PERBAIKAN DI SINI ---
-    # 1. Pembersihan Data (Data Cleaning)
     modeling_cols = feature_vars + [target_var]
     original_rows = len(df)
     df_cleaned = df[modeling_cols].dropna()
     cleaned_rows = len(df_cleaned)
     dropped_rows = original_rows - cleaned_rows
-    
-    # 2. Safety Check untuk ukuran data setelah dibersihkan
-    if cleaned_rows < 10:
-        return dbc.Alert(f"Dataset terlalu kecil untuk pemodelan setelah {dropped_rows} baris dengan data kosong dihapus. Tersisa {cleaned_rows} baris. Coba pilih 'Semua Tahun' atau tahun dengan data lebih banyak.", color="warning", className="mt-4")
-
-    X = df_cleaned[feature_vars]
-    y = df_cleaned[target_var]
-    
+    if cleaned_rows < 10: return dbc.Alert(f"Dataset terlalu kecil untuk pemodelan setelah {dropped_rows} baris dengan data kosong dihapus. Tersisa {cleaned_rows} baris. Coba pilih 'Semua Tahun' atau tahun dengan data lebih banyak.", color="warning", className="mt-4")
+    X, y = df_cleaned[feature_vars], df_cleaned[target_var]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
     model = LinearRegression() if model_type == 'Linear Regression' else RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
     mse = mean_squared_error(y_test, predictions)
-    
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=y_test, y=predictions, mode='markers', name='Prediksi vs. Aktual'))
     fig.add_trace(go.Scatter(x=[y_test.min(), y_test.max()], y=[y_test.min(), y_test.max()], mode='lines', name='Garis Ideal y=x', line=dict(dash='dash', color='black')))
     fig.update_layout(title='Evaluasi Model: Prediksi vs. Nilai Aktual', xaxis_title='Nilai Aktual', yaxis_title='Nilai Prediksi')
-    
-    # 3. Notifikasi transparan
     cleaning_notification = dbc.Alert(f"Info: {dropped_rows} baris dengan nilai kosong telah diabaikan dari {original_rows} total baris.", color="info")
-
-    return html.Div([
-        cleaning_notification,
-        dbc.Alert(f"Model '{model_type}' berhasil dievaluasi! Mean Squared Error (MSE): {mse:.2f}", color="success", className="mt-2"),
-        dcc.Graph(figure=fig)
-    ])
+    return html.Div([cleaning_notification, dbc.Alert(f"Model '{model_type}' berhasil dievaluasi! Mean Squared Error (MSE): {mse:.2f}", color="success", className="mt-2"), dcc.Graph(figure=fig)])
 
 @app.callback(Output('tgm-results-output', 'children'), Output('tgm-calculated-data-store', 'data'), Input('tgm-calculate-btn', 'n_clicks'), [State('tgm-rf-col', 'value'), State('tgm-drd-col', 'value'), State('tgm-nr-col', 'value'), State('tgm-iaf-col', 'value'), State('tgm-did-col', 'value'), State('filtered-data-store', 'data')])
 def calculate_tgm(n_clicks, rf_col, drd_col, nr_col, iaf_col, did_col, jsonified_data):
