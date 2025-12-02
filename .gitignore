@@ -1,0 +1,18 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE-specific files
+.idea/
+*.DS_Store
+
+# File data yang diunggah (opsional, tapi praktik yang baik)
+# Jika Anda memiliki file CSV sampel yang ingin disertakan, hapus baris di bawah
+*.csv
